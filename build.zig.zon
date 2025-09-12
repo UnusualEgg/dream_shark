@@ -1,0 +1,8 @@
+.{
+    .name = .dream_shark,
+    .version = "1.0.0",
+    .dependencies = .{},
+    .paths = .{"src"},
+    .minimum_zig_version = "0.14.1",
+    .fingerprint = 0xaaa6b57a2629c557,
+}
