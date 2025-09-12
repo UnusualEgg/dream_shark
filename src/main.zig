@@ -1,16 +1,6 @@
 const w4 = @import("wasm4.zig");
 const std = @import("std");
 
-const smiley = [8]u8{
-    0b11000011,
-    0b10000001,
-    0b00100100,
-    0b00100100,
-    0b00000000,
-    0b00100100,
-    0b10011001,
-    0b11000011,
-};
 pub const surfer_width = 26;
 pub const surfer_height = 26;
 pub const surfer_flags = 0; // BLIT_1BPP
