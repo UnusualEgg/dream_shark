@@ -43,9 +43,21 @@ const beam_width: i32 = 50;
 
 var shark_alive: bool = true;
 
+var prev_button2_state: bool = false;
+var moved: bool = false;
+
 export fn update() void {
     //update
     const gamepad = w4.GAMEPAD1.*;
+
+    const curr_button2_state = gamepad & w4.BUTTON_2 != 0;
+    if (curr_button2_state and !prev_button2_state and beam == 0) {
+        shark_alive = true;
+        surfer_speed = 0;
+        shark_x = 160;
+    }
+    prev_button2_state = gamepad & w4.BUTTON_2 != 0;
+    if (gamepad & (w4.BUTTON_LEFT | w4.BUTTON_RIGHT | w4.BUTTON_1) != 0) moved = true;
 
     if (gamepad & w4.BUTTON_1 != 0 and beam == 0 and shark_alive) {
         beam = beam_width;
@@ -88,9 +100,11 @@ export fn update() void {
         }
     }
     //draw
-    w4.DRAW_COLORS.* = 2;
-    const title: []const u8 = "My dream game :3";
-    w4.text(title, (160 / 2) - ((title.len / 2) * w4.FONT_SIZE), 10);
+    if (!moved) {
+        w4.DRAW_COLORS.* = 2;
+        const title: []const u8 = "My dream game :3";
+        w4.text(title, (160 / 2) - ((title.len / 2) * w4.FONT_SIZE), 10);
+    }
 
     draw_water(@intFromFloat(surfer_speed));
 
