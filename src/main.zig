@@ -89,8 +89,10 @@ export fn update() void {
     }
     //draw
     w4.DRAW_COLORS.* = 2;
-    const title: []const u8 = "musi pi sitelen lape mi :3";
+    const title: []const u8 = "musi pi sitelen lape";
     w4.text(title, (160 / 2) - ((title.len / 2) * w4.FONT_SIZE), 10);
+    const title2: []const u8 = "mi :3";
+    w4.text(title2, (160 / 2) - ((title2.len / 2) * w4.FONT_SIZE), 10 + w4.FONT_SIZE);
 
     draw_water(@intFromFloat(surfer_speed));
 
