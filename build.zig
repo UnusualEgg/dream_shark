@@ -4,12 +4,14 @@ pub fn build(b: *std.Build) !void {
     const optimize = b.standardOptimizeOption(.{ .preferred_optimize_mode = .ReleaseSmall });
     const exe = b.addExecutable(.{
         .name = "cart",
-        .root_source_file = b.path("src/main.zig"),
-        .target = b.resolveTargetQuery(.{
-            .cpu_arch = .wasm32,
-            .os_tag = .freestanding,
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("src/main.zig"),
+            .target = b.resolveTargetQuery(.{
+                .cpu_arch = .wasm32,
+                .os_tag = .freestanding,
+            }),
+            .optimize = optimize,
         }),
-        .optimize = optimize,
     });
 
     exe.entry = .disabled;
@@ -23,6 +25,7 @@ pub fn build(b: *std.Build) !void {
 
     const run_exe = b.addSystemCommand(&.{ "w4", "run-native" });
     run_exe.addArtifactArg(exe);
+    run_exe.step.dependOn(b.getInstallStep());
 
     const step_run = b.step("run", "compile and run the cart");
     step_run.dependOn(&run_exe.step);
