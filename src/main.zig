@@ -1,4 +1,4 @@
-const w4 = @import("wasm4.zig");
+const w4 = @import("wasm4");
 const std = @import("std");
 
 pub const surfer_width = 26;
@@ -61,9 +61,9 @@ export fn update() void {
 
     if (gamepad & w4.BUTTON_1 != 0 and beam == 0 and shark_alive) {
         beam = beam_width;
-        const shark_half = shark_width / 2;
-        const shark_right = shark_x + shark_half;
-        const shark_left = shark_x - shark_half;
+        const hitbox_inset = 10;
+        const shark_right = (shark_x + shark_width) - hitbox_inset;
+        const shark_left = shark_x + hitbox_inset;
         const screen_middle = 160 / 2;
         const beam_half = (beam_width / 2);
         const beam_left = screen_middle - beam_half;
@@ -87,9 +87,6 @@ export fn update() void {
             surfer_speed = max_speed;
         }
     }
-    //3 equally spaced states of rotation
-    const surfer_index: usize =
-        if (!shark_alive) 0 else if (surfer_speed >= (max_speed * (2.0 / 3.0))) 2 else if (surfer_speed > (max_speed / 3.0)) 1 else 0;
 
     if (shark_alive) {
         shark_x += shark_speed;
@@ -106,10 +103,14 @@ export fn update() void {
         w4.text(title, (160 / 2) - ((title.len / 2) * w4.FONT_SIZE), 10);
     }
 
+    //water
     draw_water(@intFromFloat(surfer_speed));
 
     //surfer
     w4.DRAW_COLORS.* = 0x0040;
+    //3 equally spaced states of rotation
+    const surfer_index: usize =
+        if (!shark_alive) 0 else if (surfer_speed >= (max_speed * (2.0 / 3.0))) 2 else if (surfer_speed > (max_speed / 3.0)) 1 else 0;
     //blit uses top left corner for the position of sprites
     //so move surfer half over
     w4.blit(&surfer[surfer_index], surfer_x - (surfer_width / 2), 51, surfer_width, surfer_height, w4.BLIT_1BPP);
