@@ -3,7 +3,7 @@ const std = @import("std");
 
 const Shark = struct {
     x: f32 = 160,
-    speed: f32 = surfer_max_speed / 2.0,
+    speed: f32 = surfer_max_speed * 0.70,
     alive: bool = true,
 
     pub const width = 49;
@@ -25,10 +25,13 @@ const Shark = struct {
 };
 const Surfer = struct {
     speed: f32 = 0,
+    jump_time: f32 = 0,
+    y_off: f32 = 0,
 
     const x: i32 = 160 / 2;
-    const y: i32 = 51;
+    const y: f32 = 51;
     const speed_change: f32 = 0.225;
+    const jump_height: f32 = 50;
 
     const width = 26;
     const height = 26;
@@ -48,6 +51,17 @@ const Surfer = struct {
             self.speed -= speed_change;
         }
         self.speed = std.math.clamp(self.speed, 0, surfer_max_speed);
+
+        if (gamepad & w4.BUTTON_UP != 0 and self.jump_time == 0 and self.speed != 0) {
+            self.jump_time += 1;
+        } else if (self.jump_time > 0) {
+            self.jump_time += 1;
+            self.y_off = (@sin((self.jump_time / jump_height) * std.math.pi) / (std.math.pi / 2.0)) * jump_height;
+            if (self.y_off <= 0) {
+                self.y_off = 0;
+                self.jump_time = 0;
+            }
+        }
     }
     fn draw(self: *const Surfer) void {
         w4.DRAW_COLORS.* = 0x0040;
@@ -56,7 +70,7 @@ const Surfer = struct {
         const surfer_index: usize = @intFromFloat((self.speed * 2.0) / surfer_max_speed);
         //blit uses top left corner as origin
         //so move surfer half over
-        w4.blit(&sprite[surfer_index], x - (width / 2), y, width, height, sprite_flags);
+        w4.blit(&sprite[surfer_index], x - (width / 2), @intFromFloat(y - self.y_off), width, height, sprite_flags);
     }
 };
 const surfer_max_speed: f32 = 5;
