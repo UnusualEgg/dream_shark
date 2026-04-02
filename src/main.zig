@@ -137,6 +137,39 @@ const Beam = struct {
         }
     }
 };
+const ObstacleType = enum { square };
+const Obstacle = struct {
+    x: f32,
+    t: ObstacleType,
+
+    const y: i32 = 50;
+    const size = 20;
+
+    fn draw(self: *Obstacle, camera_offset: f32) void {
+        w4.rect(@intFromFloat(self.x + camera_offset), y, size, size);
+    }
+};
+const Obstacles = struct {
+    list: [20]?Obstacle = @splat(null),
+
+    fn spawnTypeAt(self: *Obstacles, t: ObstacleType, x: f32) void {
+        const maybe_obs_index: ?*?Obstacle = for (&self.list) |*obs| {
+            if (obs.* == null) {
+                break obs;
+            }
+        } else null;
+
+        if (maybe_obs_index) |obs_index| {
+            self.list[obs_index] = Obstacle{ .t = t, .x = x };
+        }
+    }
+    fn spawnRandom(self: *Obstacles, rng: std.Random, camera_offset: f32) void {
+        const max_off = 30.00;
+        const obs_type = rng.enumValue(ObstacleType);
+        const x = rng.float(f32) * max_off + camera_offset;
+        self.spawnTypeAt(obs_type, x);
+    }
+};
 const PRNG = std.Random.DefaultPrng;
 const State = struct {
     surfer: Surfer = .{},
@@ -146,6 +179,7 @@ const State = struct {
     prev_button2_state: bool = false,
     moved: bool = false,
     prng: PRNG = .init(0),
+    obstacles: Obstacles = .{},
     ticks: u64 = 0,
 
     fn update(self: *State) void {
@@ -172,6 +206,10 @@ const State = struct {
         if (gamepad & (w4.BUTTON_LEFT | w4.BUTTON_RIGHT | w4.BUTTON_1) != 0) {
             self.moved = true;
             state.prng.seed(self.ticks);
+        }
+        //DEBUG
+        if (gamepad & w4.BUTTON_DOWN != 0) {
+            self.obstacles.spawnRandom(self.prng.random(), camera_offset);
         }
         self.ticks +%= 1;
     }
