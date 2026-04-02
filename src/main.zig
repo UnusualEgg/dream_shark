@@ -137,6 +137,7 @@ const Beam = struct {
         }
     }
 };
+const PRNG = std.Random.DefaultPrng;
 const State = struct {
     surfer: Surfer = .{},
     beam: Beam = .{},
@@ -144,6 +145,8 @@ const State = struct {
     water: Water = .{},
     prev_button2_state: bool = false,
     moved: bool = false,
+    prng: PRNG = .init(0),
+    ticks: u64 = 0,
 
     fn update(self: *State) void {
         const gamepad = w4.GAMEPAD1.*;
@@ -166,7 +169,11 @@ const State = struct {
             self.water.update(camera_offset);
         }
 
-        if (gamepad & (w4.BUTTON_LEFT | w4.BUTTON_RIGHT | w4.BUTTON_1) != 0) self.moved = true;
+        if (gamepad & (w4.BUTTON_LEFT | w4.BUTTON_RIGHT | w4.BUTTON_1) != 0) {
+            self.moved = true;
+            state.prng.seed(self.ticks);
+        }
+        self.ticks +%= 1;
     }
     fn draw(self: *const State) void {
         if (!self.moved) {
