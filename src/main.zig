@@ -31,7 +31,7 @@ const Surfer = struct {
     jump_time: f32 = 0,
     y_off: f32 = 0,
 
-    const x: i32 = screen_size / 2;
+    const x: i32 = width;
     const y: f32 = 51;
     const speed_change: f32 = 0.225;
     const jump_height: f32 = 50;
@@ -46,13 +46,13 @@ const Surfer = struct {
         [85]u8{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0f, 0x00, 0x00, 0x07, 0xc0, 0x00, 0x01, 0xf0, 0x00, 0x7f, 0xf8, 0x00, 0x7f, 0xfe, 0x00, 0x1c, 0x3f, 0xf8, 0x00, 0x1f, 0xff, 0x80, 0x0f, 0xf0, 0xf0, 0x03, 0xfc, 0x0c, 0x00, 0xfe, 0x01, 0x00, 0x7f, 0x80, 0x00, 0x1f, 0xe0, 0x0f, 0x3f, 0x78, 0x03, 0xff, 0x8f, 0x00, 0xff, 0xe3, 0xc0, 0x3f, 0xff, 0xf0, 0x03, 0xff, 0xfe, 0x00, 0x0f, 0xff, 0xe0, 0x00, 0x7f, 0xfe, 0x00, 0x01, 0xff, 0xc0, 0x00, 0x0f, 0xf0, 0x00, 0x00, 0x18, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
     };
 
+    fn speedUp(self: *Surfer) void {
+        self.speed += speed_change;
+    }
+    fn startMoving(self: *Surfer) void {
+        self.speed += speed_change * 3;
+    }
     fn update(self: *Surfer, gamepad: u8) void {
-        if (gamepad & w4.BUTTON_RIGHT != 0) {
-            state.surfer.speed += speed_change;
-        }
-        if (gamepad & w4.BUTTON_LEFT != 0) {
-            self.speed -= speed_change;
-        }
         self.speed = std.math.clamp(self.speed, 0, surfer_max_speed);
 
         if (gamepad & w4.BUTTON_UP != 0 and self.jump_time == 0 and self.speed != 0) {
@@ -147,7 +147,9 @@ const Obstacle = struct {
 
     const y: i32 = 63;
     const size = 8;
-
+    fn isColliding(self: *const Obstacle, other_x: f32, other_y: f32, other_width: f32, other_height: f32) bool {
+        return (self.x <= other_x + other_width and self.x + size >= other_x) and (y <= other_y + other_height and y + size >= other_y);
+    }
     fn update(self: *Obstacle, camera_offset: f32) void {
         self.x += camera_offset;
     }
@@ -205,6 +207,7 @@ const State = struct {
     prng: PRNG = .init(0),
     obstacles: Obstacles = .{},
     ticks: u64 = 0,
+    distance: f32 = 0,
 
     fn update(self: *State) void {
         const gamepad = w4.GAMEPAD1.*;
@@ -220,6 +223,7 @@ const State = struct {
 
         //update
         const camera_offset: f32 = if (self.shark.alive) (-self.surfer.speed) else 0;
+        self.distance -= camera_offset;
         self.beam.update(gamepad, @intFromFloat(self.shark.x), &self.shark.alive);
         if (self.shark.alive) {
             self.surfer.update(gamepad);
@@ -227,16 +231,27 @@ const State = struct {
             self.water.update(camera_offset);
             self.obstacles.update(camera_offset);
         }
-
+        if (!self.moved and gamepad & w4.BUTTON_RIGHT != 0)
+            self.surfer.startMoving();
         if (gamepad & (w4.BUTTON_LEFT | w4.BUTTON_RIGHT | w4.BUTTON_1) != 0) {
             self.moved = true;
             state.prng.seed(self.ticks);
+        }
+        if (self.moved and self.ticks % (60 * 20) == 0) {
+            self.surfer.speedUp();
         }
         //DEBUG
         if (gamepad & w4.BUTTON_DOWN != 0) {
             self.obstacles.spawnRandom(self.prng.random(), camera_offset);
         }
         self.ticks +%= 1;
+    }
+    fn drawScore(self: *const State) void {
+        var buf: [64]u8 = undefined;
+        const str = std.fmt.bufPrint(&buf, "{:.0}", .{self.distance / 10}) catch "SCORE TOO BIG";
+        const x = (screen_size / 2) - (@as(i32, @intCast(str.len)) * 8);
+        w4.DRAW_COLORS.* = 0x02;
+        w4.text(str, x, 0);
     }
     fn draw(self: *const State) void {
         if (!self.moved) {
@@ -250,6 +265,7 @@ const State = struct {
         self.surfer.draw();
         self.shark.draw();
         self.beam.draw();
+        self.drawScore();
     }
 };
 var state: State = .{};
