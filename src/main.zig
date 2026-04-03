@@ -1,8 +1,11 @@
 const w4 = @import("wasm4.zig");
 const std = @import("std");
 
+const screen_sizef = 160.0;
+const screen_size = 160;
+
 const Shark = struct {
-    x: f32 = 160,
+    x: f32 = screen_sizef,
     speed: f32 = surfer_max_speed * 0.70,
     alive: bool = true,
 
@@ -16,7 +19,7 @@ const Shark = struct {
         self.x += camera_offset;
 
         //stop the shark at 4 screens ahead
-        self.x = std.math.clamp(self.x, -2 * 160, 4 * 160);
+        self.x = std.math.clamp(self.x, -2 * screen_size, 4 * screen_size);
     }
     fn draw(self: *const Shark) void {
         w4.DRAW_COLORS.* = 0x4020;
@@ -28,7 +31,7 @@ const Surfer = struct {
     jump_time: f32 = 0,
     y_off: f32 = 0,
 
-    const x: i32 = 160 / 2;
+    const x: i32 = screen_size / 2;
     const y: f32 = 51;
     const speed_change: f32 = 0.225;
     const jump_height: f32 = 50;
@@ -79,7 +82,7 @@ const Water = struct {
     x: f32 = 0,
 
     const y: i32 = 60;
-    const width = 160;
+    const width = screen_size;
     const height = 12;
     const sprite_flags = w4.BLIT_1BPP;
     const sprite = [240]u8{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0xf0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0f, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7f, 0xfe, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0xf8, 0x00, 0x00, 0x00, 0x00, 0x01, 0xf0, 0x00, 0x00, 0x07, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xc0, 0x00, 0x7f, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x1f, 0xfe, 0x00, 0x00, 0x1f, 0xff, 0xe7, 0x00, 0x00, 0x00, 0x03, 0xff, 0xc0, 0x00, 0xff, 0xfe, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0x00, 0x00, 0x7f, 0xff, 0xc0, 0x00, 0x00, 0x00, 0x07, 0xff, 0x80, 0x0f, 0xff, 0xe3, 0x00, 0x00, 0x00, 0x00, 0x7f, 0xf9, 0x00, 0x01, 0xff, 0xff, 0x00, 0x00, 0xff, 0x9c, 0x1f, 0xfe, 0x00, 0x0f, 0xff, 0xc0, 0x00, 0x00, 0x00, 0x00, 0xff, 0xe0, 0x00, 0x39, 0xff, 0xfe, 0x1c, 0x03, 0xff, 0xfc, 0x3f, 0xfe, 0x00, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x03, 0xff, 0xe0, 0x00, 0x7f, 0xff, 0xff, 0xff, 0x0f, 0xff, 0xfc, 0x7f, 0xff, 0xff, 0xff, 0xff, 0x00, 0x38, 0x00, 0x00, 0x07, 0xff, 0xe0, 0x0f, 0xff, 0xff, 0xff, 0xff, 0x1f, 0xff, 0xfe, 0xff, 0xff, 0xff, 0xff, 0xfe, 0x03, 0xff, 0x80, 0xff, 0xcf, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfc, 0x03, 0xff, 0xcf, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
@@ -101,7 +104,7 @@ const Water = struct {
         w4.blit(&sprite, int_x + width, y, width, height, sprite_flags);
 
         w4.DRAW_COLORS.* = 0x0003;
-        w4.rect(0, y + height, width, 160 - (y + height));
+        w4.rect(0, y + height, width, screen_size - (y + height));
     }
 };
 
@@ -121,7 +124,7 @@ const Beam = struct {
             const hitbox_inset = 10;
             const shark_right = (shark_x + Shark.width) - hitbox_inset;
             const shark_left = shark_x + hitbox_inset;
-            const screen_middle = 160 / 2;
+            const screen_middle = screen_size / 2;
             const beam_half = (width / 2);
             const beam_left = screen_middle - beam_half;
             const beam_right = screen_middle + beam_half;
@@ -133,7 +136,7 @@ const Beam = struct {
     fn draw(self: *const Beam) void {
         if (self.size > 0) {
             w4.DRAW_COLORS.* = 0x0002;
-            w4.rect(Surfer.x - @divFloor(self.size, 2), 0, @intCast(self.size), 160);
+            w4.rect(Surfer.x - @divFloor(self.size, 2), 0, @intCast(self.size), screen_size);
         }
     }
 };
@@ -142,32 +145,53 @@ const Obstacle = struct {
     x: f32,
     t: ObstacleType,
 
-    const y: i32 = 50;
-    const size = 20;
+    const y: i32 = 63;
+    const size = 8;
 
-    fn draw(self: *Obstacle, camera_offset: f32) void {
-        w4.rect(@intFromFloat(self.x + camera_offset), y, size, size);
+    fn update(self: *Obstacle, camera_offset: f32) void {
+        self.x += camera_offset;
+    }
+    fn draw(self: *const Obstacle) void {
+        w4.DRAW_COLORS.* = 0x42;
+        w4.rect(@intFromFloat(self.x), y, size, size);
     }
 };
 const Obstacles = struct {
     list: [20]?Obstacle = @splat(null),
 
     fn spawnTypeAt(self: *Obstacles, t: ObstacleType, x: f32) void {
-        const maybe_obs_index: ?*?Obstacle = for (&self.list) |*obs| {
+        const maybe_free_slot: ?*?Obstacle = for (&self.list) |*obs| {
             if (obs.* == null) {
                 break obs;
             }
         } else null;
 
-        if (maybe_obs_index) |obs_index| {
-            self.list[obs_index] = Obstacle{ .t = t, .x = x };
+        if (maybe_free_slot) |obstacle| {
+            w4.trace("spawned obstacle");
+            obstacle.* = Obstacle{ .t = t, .x = x };
+        } else {
+            w4.trace("failed to spawn obstacle");
         }
     }
     fn spawnRandom(self: *Obstacles, rng: std.Random, camera_offset: f32) void {
         const max_off = 30.00;
         const obs_type = rng.enumValue(ObstacleType);
-        const x = rng.float(f32) * max_off + camera_offset;
+        const x = rng.float(f32) * max_off + camera_offset + screen_sizef;
         self.spawnTypeAt(obs_type, x);
+    }
+    fn update(self: *Obstacles, camera_offset: f32) void {
+        for (0..self.list.len) |i| {
+            if (self.list[i]) |*obstacle| {
+                obstacle.update(camera_offset);
+            }
+        }
+    }
+    fn draw(self: *const Obstacles) void {
+        for (&self.list) |*slot| {
+            if (slot.*) |obstacle| {
+                obstacle.draw();
+            }
+        }
     }
 };
 const PRNG = std.Random.DefaultPrng;
@@ -190,7 +214,7 @@ const State = struct {
         if (curr_button2_state and !self.prev_button2_state and self.beam.size == 0) {
             self.shark.alive = true;
             self.surfer.speed = 0;
-            self.shark.x = 160;
+            self.shark.x = screen_sizef;
         }
         self.prev_button2_state = gamepad & w4.BUTTON_2 != 0;
 
@@ -201,6 +225,7 @@ const State = struct {
             self.surfer.update(gamepad);
             self.shark.update(camera_offset);
             self.water.update(camera_offset);
+            self.obstacles.update(camera_offset);
         }
 
         if (gamepad & (w4.BUTTON_LEFT | w4.BUTTON_RIGHT | w4.BUTTON_1) != 0) {
@@ -217,10 +242,11 @@ const State = struct {
         if (!self.moved) {
             w4.DRAW_COLORS.* = 2;
             const title: []const u8 = "My dream game :3";
-            w4.text(title, (160 / 2) - ((title.len / 2) * w4.FONT_SIZE), 10);
+            w4.text(title, (screen_size / 2) - ((title.len / 2) * w4.FONT_SIZE), 10);
         }
 
         self.water.draw();
+        self.obstacles.draw();
         self.surfer.draw();
         self.shark.draw();
         self.beam.draw();
